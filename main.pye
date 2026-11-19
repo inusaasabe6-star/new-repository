@@ -1,0 +1,153 @@
+import os
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
+)
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    ContextTypes
+)
+
+BOT_TOKEN = os.getenv("8907547608:AAGzm56S-6vN9GMvCQDn5HdRL8-9-lTuNLo")
+
+MOVIES = [
+    {
+        "id": "1",
+        "name": "Movie 1",
+        "price": 500
+    },
+    {
+        "id": "2",
+        "name": "Movie 2",
+        "price": 700
+    }
+]
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "🎬 Movies",
+                callback_data="movies"
+            ),
+            InlineKeyboardButton(
+                "🔍 Search",
+                callback_data="search"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "🛒 My Cart",
+                callback_data="cart"
+            ),
+            InlineKeyboardButton(
+                "📥 My Movies",
+                callback_data="my_movies"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "👤 Profile",
+                callback_data="profile"
+            ),
+            InlineKeyboardButton(
+                "📞 Support",
+                callback_data="support"
+            )
+        ]
+    ]
+
+    await update.message.reply_text(
+        "🎬 WELCOME TO AREWA NETFLIX\n\n"
+        "Enjoy your favourite movies!\n\n"
+        "Select an option below:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+
+async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == "movies":
+
+        keyboard = []
+
+        for movie in MOVIES:
+            keyboard.append([
+                InlineKeyboardButton(
+                    f"🎬 {movie['name']} - ₦{movie['price']}",
+                    callback_data=f"movie_{movie['id']}"
+                )
+            ])
+
+        await query.message.reply_text(
+            "🎥 AVAILABLE MOVIES",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+    elif query.data.startswith("movie_"):
+
+        movie_id = query.data.replace("movie_", "")
+
+        movie = next(
+            (m for m in MOVIES if m["id"] == movie_id),
+            None
+        )
+
+        if movie:
+            await query.message.reply_text(
+                f"🎬 {movie['name']}\n"
+                f"💰 Price: ₦{movie['price']}\n\n"
+                "Contact support for more information."
+            )
+
+    elif query.data == "search":
+        await query.message.reply_text(
+            "🔍 Search feature coming soon."
+        )
+
+    elif query.data == "cart":
+        await query.message.reply_text(
+            "🛒 Your cart is currently empty."
+        )
+
+    elif query.data == "my_movies":
+        await query.message.reply_text(
+            "📥 Your purchased movies will appear here."
+        )
+
+    elif query.data == "profile":
+        await query.message.reply_text(
+            f"👤 Your Telegram ID: {query.from_user.id}"
+        )
+
+    elif query.data == "support":
+        await query.message.reply_text(
+            "📞 Contact our support team."
+        )
+
+
+def main():
+
+    if not BOT_TOKEN:
+        raise ValueError("BOT_TOKEN is missing!")
+
+    app = Application.builder().token(BOT_TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(buttons))
+
+    print("AREWA NETFLIX BOT IS RUNNING")
+
+    app.run_polling()
+
+
+if __name__ == "__main__":
+    main()
